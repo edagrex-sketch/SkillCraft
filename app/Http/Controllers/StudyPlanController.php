@@ -103,6 +103,16 @@ class StudyPlanController extends Controller
                         'difficulty' => $topicData['difficulty'] ?? $data['level'],
                         'estimated_minutes' => $topicData['estimated_minutes'] ?? 30,
                         'order' => $order + 1,
+                        'session_context' => $topicData['context'] ?? '',
+                        'active_recall_question' => $topicData['active_recall'] ?? '',
+                        'practice_guided' => $topicData['practice_guided'] ?? '',
+                        'practice_structured' => $topicData['practice_structured'] ?? '',
+                        'practice_open' => $topicData['practice_open'] ?? '',
+                        'reflection_prompts' => $topicData['reflection'] ?? [],
+                        'common_mistakes' => $topicData['mistakes'] ?? [],
+                        'challenge' => $topicData['challenge'] ?? '',
+                        'analogies' => $topicData['analogies'] ?? [],
+                        'review_questions' => $topicData['review_questions'] ?? [],
                     ]);
                 }
             }
@@ -203,6 +213,16 @@ class StudyPlanController extends Controller
                         'difficulty' => $topicData['difficulty'] ?? $studyPlan->level,
                         'estimated_minutes' => $topicData['estimated_minutes'] ?? 30,
                         'order' => $order + 1,
+                        'session_context' => $topicData['context'] ?? '',
+                        'active_recall_question' => $topicData['active_recall'] ?? '',
+                        'practice_guided' => $topicData['practice_guided'] ?? '',
+                        'practice_structured' => $topicData['practice_structured'] ?? '',
+                        'practice_open' => $topicData['practice_open'] ?? '',
+                        'reflection_prompts' => $topicData['reflection'] ?? [],
+                        'common_mistakes' => $topicData['mistakes'] ?? [],
+                        'challenge' => $topicData['challenge'] ?? '',
+                        'analogies' => $topicData['analogies'] ?? [],
+                        'review_questions' => $topicData['review_questions'] ?? [],
                     ]);
                 }
             }
@@ -236,6 +256,10 @@ class StudyPlanController extends Controller
             'duration_minutes' => 'required|integer|min:1|max:1440',
             'confidence_level' => 'required|integer|min:1|max:5',
             'notes' => 'nullable|string|max:2000',
+            'active_recall_score' => 'nullable|integer|min:1|max:5',
+            'reflection_answers' => 'nullable|array',
+            'phase_completions' => 'nullable|array',
+            'needs_review' => 'nullable|boolean',
         ]);
 
         $session = $topic->sessions()->create([
@@ -244,6 +268,18 @@ class StudyPlanController extends Controller
             'duration_minutes' => $data['duration_minutes'],
             'confidence_level' => $data['confidence_level'],
             'notes' => $data['notes'] ?? '',
+            'active_recall_score' => $data['active_recall_score'] ?? null,
+            'reflection_answers' => $data['reflection_answers'] ?? null,
+            'phase_completions' => $data['phase_completions'] ?? null,
+            'needs_review' => $data['needs_review'] ?? false,
+            'next_review_at' => match ((int) $data['confidence_level']) {
+                1 => now()->addHours(1),
+                2 => now()->addDay(),
+                3 => now()->addDays(3),
+                4 => now()->addWeek(),
+                5 => now()->addWeeks(2),
+                default => now()->addDays(1),
+            },
             'started_at' => now()->subMinutes($data['duration_minutes']),
             'completed_at' => now(),
         ]);
