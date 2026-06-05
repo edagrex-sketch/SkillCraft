@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, useForm } from '@inertiajs/vue3'
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import Icon from '@/Components/Icon.vue'
 
@@ -17,22 +17,29 @@ const form = useForm({
 const step = ref(1)
 const totalSteps = 4
 
-function nextStep() {
-    if (step.value < totalSteps) step.value++
-}
-
-function prevStep() {
-    if (step.value > 1) step.value--
-}
-
 function submit() {
     form.post(route('study-plans.store'))
 }
+
+const mounted = ref(false)
+const direction = ref(1)
+
+onMounted(() => { mounted.value = true })
 
 const canNext = computed(() => {
     if (step.value === 1) return !!form.skill
     return true
 })
+
+function nextStep() {
+    direction.value = 1
+    if (step.value < totalSteps) step.value++
+}
+
+function prevStep() {
+    direction.value = -1
+    if (step.value > 1) step.value--
+}
 
 const popularSkills = [
     'Python', 'JavaScript', 'Desarrollo Web', 'Data Science', 'Diseno UX/UI',
@@ -62,7 +69,7 @@ const steps = [
         </template>
 
         <div class="mx-auto max-w-3xl">
-            <div class="rounded-xl border border-gray-200/60 bg-white/60 p-8 shadow-sm dark:border-gray-800/40 dark:bg-gray-900/40">
+            <div :class="['rounded-xl border border-gray-200/60 bg-white/60 p-8 shadow-sm dark:border-gray-800/40 dark:bg-gray-900/40', 'transition-all duration-700 ease-out-expo', mounted ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0']">
                 <div class="mb-12">
                     <div class="mx-auto flex max-w-xl items-center justify-between">
                         <div
@@ -353,14 +360,14 @@ const steps = [
 <style scoped>
 .slide-enter-active,
 .slide-leave-active {
-    transition: all 0.35s ease;
+    transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .slide-enter-from {
     opacity: 0;
-    transform: translateX(24px);
+    transform: translateX(v-bind('direction * 24 + "px"'));
 }
 .slide-leave-to {
     opacity: 0;
-    transform: translateX(-24px);
+    transform: translateX(v-bind('direction * -24 + "px"'));
 }
 </style>

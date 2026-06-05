@@ -16,9 +16,10 @@ const props = defineProps<{
 }>()
 
 const mounted = ref(false)
+const loading = ref(true)
 
 onMounted(() => {
-    setTimeout(() => mounted.value = true, 50)
+    setTimeout(() => { mounted.value = true; loading.value = false }, 50)
 })
 
 function formatMinutes(minutes: number) {
@@ -71,13 +72,14 @@ const statCards = [
         </template>
 
         <div class="space-y-8">
-            <div v-if="activePlans.length === 0" :class="['transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]', mounted ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0']">
+            <div v-if="activePlans.length === 0" :class="['transition-all duration-700 ease-out-expo', mounted ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0']">
                 <div class="relative overflow-hidden rounded-2xl bg-brand-600 px-10 py-12 shadow-xl">
                     <div class="pointer-events-none absolute inset-0 bg-dot opacity-[0.08]" />
-                    <div class="pointer-events-none absolute -top-20 -right-20 h-48 w-48 rounded-full bg-white/[0.06] blur-3xl" />
+                    <div class="pointer-events-none absolute -top-20 -right-20 h-48 w-48 rounded-full bg-white/[0.06] blur-3xl animate-float" />
+                    <div class="pointer-events-none absolute -bottom-20 -left-20 h-48 w-48 rounded-full bg-white/[0.04] blur-3xl animate-float" style="animation-delay: -3s" />
 
                     <div class="relative text-center text-white">
-                        <div class="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-sm">
+                        <div class="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-sm animate-bounce-gentle">
                             <Icon name="book-open" :size="28" class="text-white" />
                         </div>
                         <h2 class="text-2xl font-bold">Comienza tu viaje de aprendizaje</h2>
@@ -85,7 +87,7 @@ const statCards = [
                         <div class="mt-7 flex justify-center gap-4">
                             <Link
                                 :href="route('study-plans.create')"
-                                class="group inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-semibold text-brand-700 shadow-lg transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:bg-brand-50 hover:shadow-xl active:scale-[0.97]"
+                                class="group inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-semibold text-brand-700 shadow-lg transition-all duration-300 ease-out-expo hover:bg-brand-50 hover:shadow-xl active:scale-[0.97]"
                             >
                                 Crear mi primer plan
                                 <Icon name="arrow-right" :size="16" class="transition-transform duration-300 group-hover:translate-x-0.5" />
@@ -95,26 +97,39 @@ const statCards = [
                 </div>
             </div>
 
-            <div :class="['grid gap-5 sm:grid-cols-2 lg:grid-cols-4', 'transition-all duration-700 delay-100 ease-[cubic-bezier(0.16,1,0.3,1)]', mounted ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0']">
+            <div :class="['grid gap-5 sm:grid-cols-2 lg:grid-cols-4', 'transition-all duration-700 delay-100 ease-out-expo', mounted ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0']">
+                <template v-if="loading">
+                    <div v-for="i in 4" :key="'skeleton-'+i" class="rounded-xl border border-gray-200/60 bg-white/60 p-6 dark:border-gray-800/40 dark:bg-gray-900/40">
+                        <div class="skeleton h-4 w-20 mb-4" />
+                        <div class="skeleton h-8 w-16" />
+                    </div>
+                </template>
                 <div
-                    v-for="card in statCards"
+                    v-for="(card, i) in statCards"
                     :key="card.key"
-                    class="rounded-xl border border-gray-200/60 bg-white/60 p-6 shadow-sm backdrop-blur-sm transition-all duration-300 hover:border-gray-200 hover:shadow-md dark:border-gray-800/40 dark:bg-gray-900/40 dark:hover:border-gray-700/50"
+                    class="rounded-xl border border-gray-200/60 bg-white/60 p-6 shadow-sm backdrop-blur-sm transition-all duration-500 ease-out-expo hover:-translate-y-0.5 hover:border-gray-200 hover:shadow-lg dark:border-gray-800/40 dark:bg-gray-900/40 dark:hover:border-gray-700/50"
+                    :style="{ animationDelay: `${i * 100}ms` }"
                 >
                     <div class="flex items-start justify-between">
                         <div>
                             <p class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ card.label }}</p>
                             <p class="mt-2 text-3xl font-bold tracking-tight text-gray-900 dark:text-white">{{ card.value(stats) }}</p>
                         </div>
-                        <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50 text-brand-600 dark:bg-brand-950 dark:text-brand-400">
+                        <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50 text-brand-600 transition-transform duration-300 group-hover:scale-110 dark:bg-brand-950 dark:text-brand-400">
                             <Icon :name="card.icon" :size="18" />
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div :class="['grid gap-8 lg:grid-cols-2', 'transition-all duration-700 delay-200 ease-[cubic-bezier(0.16,1,0.3,1)]', mounted ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0']">
-                <div class="rounded-xl border border-gray-200/60 bg-white/60 shadow-sm dark:border-gray-800/40 dark:bg-gray-900/40">
+            <div :class="['grid gap-8 lg:grid-cols-2', 'transition-all duration-700 delay-200 ease-out-expo', mounted ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0']">
+                <template v-if="loading">
+                    <div v-for="i in 2" :key="'skeleton-card-'+i" class="rounded-xl border border-gray-200/60 bg-white/60 p-6 dark:border-gray-800/40 dark:bg-gray-900/40">
+                        <div class="skeleton h-5 w-32 mb-5" />
+                        <div v-for="j in 3" :key="'skeleton-item-'+j" class="skeleton h-12 w-full mb-3" />
+                    </div>
+                </template>
+                <div v-if="!loading" class="rounded-xl border border-gray-200/60 bg-white/60 shadow-sm transition-all duration-300 hover:shadow-md dark:border-gray-800/40 dark:bg-gray-900/40">
                     <div class="flex items-center justify-between border-b border-gray-100 px-6 py-5 dark:border-gray-800/50">
                         <h3 class="text-[15px] font-semibold text-gray-900 dark:text-white">Planes de estudio</h3>
                         <Link :href="route('study-plans.index')" class="group flex items-center gap-1 text-sm font-medium text-brand-600 transition-colors hover:text-brand-500 dark:text-brand-400">
@@ -135,13 +150,13 @@ const statCards = [
                             </Link>
                         </div>
 
-                        <div v-for="plan in activePlans" :key="plan.id" class="group mb-3 last:mb-0">
+                        <div v-for="(plan, i) in activePlans" :key="plan.id" class="group mb-3 last:mb-0 animate-fade-in-up" :style="{ animationDelay: `${i * 80}ms` }">
                             <Link
                                 :href="route('study-plans.show', plan.id)"
                                 class="flex items-center justify-between rounded-xl border border-transparent px-4 py-3.5 transition-all duration-200 hover:border-gray-200/80 hover:bg-white/50 hover:shadow-sm dark:hover:border-gray-700/40 dark:hover:bg-gray-800/30"
                             >
                                 <div class="flex items-center gap-3.5">
-                                    <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-600 text-sm font-bold text-white shadow-sm">
+                                    <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-600 text-sm font-bold text-white shadow-sm transition-transform duration-200 group-hover:scale-105">
                                         {{ plan.title.charAt(0) }}
                                     </div>
                                     <div>
@@ -162,7 +177,7 @@ const statCards = [
                     </div>
                 </div>
 
-                <div class="rounded-xl border border-gray-200/60 bg-white/60 shadow-sm dark:border-gray-800/40 dark:bg-gray-900/40">
+                <div v-if="!loading" class="rounded-xl border border-gray-200/60 bg-white/60 shadow-sm transition-all duration-300 hover:shadow-md dark:border-gray-800/40 dark:bg-gray-900/40">
                     <div class="flex items-center justify-between border-b border-gray-100 px-6 py-5 dark:border-gray-800/50">
                         <h3 class="text-[15px] font-semibold text-gray-900 dark:text-white">Sesiones recientes</h3>
                     </div>
@@ -176,8 +191,8 @@ const statCards = [
                             <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">Empieza un plan para registrar sesiones</p>
                         </div>
 
-                        <div v-for="session in recentSessions" :key="session.id" class="group mb-2 flex items-center gap-3.5 rounded-xl px-4 py-3 transition-all last:mb-0 hover:bg-white/50 dark:hover:bg-gray-800/30">
-                            <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50 text-brand-600 dark:bg-brand-950 dark:text-brand-400">
+                        <div v-for="(session, i) in recentSessions" :key="session.id" class="group mb-2 flex items-center gap-3.5 rounded-xl px-4 py-3 transition-all last:mb-0 hover:bg-white/50 dark:hover:bg-gray-800/30 animate-fade-in-up" :style="{ animationDelay: `${i * 80}ms` }">
+                            <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50 text-brand-600 transition-transform duration-200 group-hover:scale-105 dark:bg-brand-950 dark:text-brand-400">
                                 <Icon name="book-open" :size="16" />
                             </div>
                             <div class="min-w-0 flex-1">
@@ -188,7 +203,7 @@ const statCards = [
                                     {{ session.study_plan?.title }} &middot; {{ formatMinutes(session.duration_minutes) }}
                                 </p>
                             </div>
-                            <div v-if="session.confidence_level" class="flex shrink-0 items-center gap-1 rounded-lg bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-700 dark:bg-brand-950 dark:text-brand-300">
+                            <div v-if="session.confidence_level" class="flex shrink-0 items-center gap-1 rounded-lg bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-700 transition-all group-hover:bg-brand-100 dark:bg-brand-950 dark:text-brand-300 dark:group-hover:bg-brand-900/50">
                                 <span>{{ session.confidence_level }}</span>
                                 <span class="text-[10px] opacity-60">/5</span>
                             </div>
