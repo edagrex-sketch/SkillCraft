@@ -84,9 +84,9 @@ function submit() {
                     </div>
                 </form>
 
-                <div v-if="$page.props.flash?.success" class="mt-4 flex items-center gap-2 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300">
+                <div v-if="($page.props as any).flash?.success" class="mt-4 flex items-center gap-2 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300">
                     <Icon name="check-circle" :size="16" />
-                    {{ $page.props.flash.success }}
+                    {{ ($page.props as any).flash.success }}
                 </div>
             </div>
         </div>

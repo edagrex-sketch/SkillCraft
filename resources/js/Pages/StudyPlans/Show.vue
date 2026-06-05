@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, router } from '@inertiajs/vue3'
+import { Head, Link, router, useForm } from '@inertiajs/vue3'
 import { ref, computed } from 'vue'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import Icon from '@/Components/Icon.vue'
@@ -9,6 +9,7 @@ const props = defineProps<{
 }>()
 
 const activeWeek = ref<number | null>(null)
+const sessionTopic = ref<number | null>(null)
 
 function toggleWeek(weekId: number) {
     activeWeek.value = activeWeek.value === weekId ? null : weekId
@@ -56,6 +57,60 @@ function scrollToWeek(weekId: number) {
         document.getElementById(`week-${weekId}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }, 100)
 }
+
+const totalSessions = computed(() => {
+    return props.plan.weeks.reduce((acc: number, w: any) => {
+        return acc + w.topics.reduce((a: number, t: any) => a + (t.sessions?.length || 0), 0)
+    }, 0)
+})
+
+const totalMinutes = computed(() => {
+    return props.plan.weeks.reduce((acc: number, w: any) => {
+        return acc + w.topics.reduce((a: number, t: any) => a + (t.sessions?.reduce((s: number, sess: any) => s + sess.duration_minutes, 0) || 0), 0)
+    }, 0)
+})
+
+// Session form
+const sessionForm = useForm({
+    duration_minutes: 30,
+    confidence_level: 3,
+    notes: '',
+})
+
+function openSessionForm(topicId: number) {
+    sessionTopic.value = topicId
+    sessionForm.reset()
+    sessionForm.duration_minutes = 30
+    sessionForm.confidence_level = 3
+}
+
+function closeSessionForm() {
+    sessionTopic.value = null
+}
+
+function submitSession(topicId: number) {
+    sessionForm.post(route('topics.sessions.store', topicId), {
+        preserveScroll: true,
+        onSuccess: () => closeSessionForm(),
+    })
+}
+
+function deleteSession(sessionId: number) {
+    router.delete(route('sessions.destroy', sessionId), {
+        preserveScroll: true,
+    })
+}
+
+function formatMinutes(minutes: number) {
+    if (!minutes) return '0 min'
+    const h = Math.floor(minutes / 60)
+    const m = minutes % 60
+    return h > 0 ? `${h}h ${m}m` : `${m} min`
+}
+
+function weekMinutes(week: any) {
+    return week.topics.reduce((a: number, t: any) => a + (t.sessions?.reduce((s: number, sess: any) => s + sess.duration_minutes, 0) || 0), 0)
+}
 </script>
 
 <template>
@@ -89,6 +144,9 @@ function scrollToWeek(weekId: number) {
                         <Icon name="clock" :size="14" />
                         {{ plan.hours_per_week }}h/sem
                     </span>
+                    <Link :href="route('study-plans.edit', plan.id)" class="btn-ghost">
+                        <Icon name="edit" :size="16" />
+                    </Link>
                 </div>
             </div>
         </template>
@@ -109,8 +167,14 @@ function scrollToWeek(weekId: number) {
                             </p>
                         </div>
                     </div>
-                    <div class="flex h-14 w-14 items-center justify-center rounded-full bg-brand-50 dark:bg-brand-950">
-                        <span class="text-lg font-bold text-brand-600 dark:text-brand-400">{{ progressPercent }}%</span>
+                    <div class="flex items-center gap-6">
+                        <div class="hidden text-right sm:block">
+                            <p class="text-xs text-gray-400 dark:text-gray-500">{{ totalSessions }} sesiones</p>
+                            <p class="text-xs text-gray-400 dark:text-gray-500">{{ formatMinutes(totalMinutes) }} total</p>
+                        </div>
+                        <div class="flex h-14 w-14 items-center justify-center rounded-full bg-brand-50 dark:bg-brand-950">
+                            <span class="text-lg font-bold text-brand-600 dark:text-brand-400">{{ progressPercent }}%</span>
+                        </div>
                     </div>
                 </div>
                 <div class="mt-4 h-2 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
@@ -130,6 +194,34 @@ function scrollToWeek(weekId: number) {
                         <Icon name="layers" :size="12" />
                         Semana {{ week.week_number }}
                     </button>
+                </div>
+            </div>
+
+            <div v-if="plan.status === 'failed'" class="rounded-xl border border-red-200/60 bg-red-50/60 p-6 dark:border-red-900/30 dark:bg-red-950/20">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400">
+                            <Icon name="alert-circle" :size="20" />
+                        </div>
+                        <div>
+                            <p class="text-sm font-semibold text-red-800 dark:text-red-200">Error al generar el plan</p>
+                            <p class="text-xs text-red-600 dark:text-red-400">La generacion con IA fallo. Puedes intentarlo de nuevo.</p>
+                        </div>
+                    </div>
+                    <button
+                        @click="router.post(route('study-plans.retry', plan.id))"
+                        class="btn-primary bg-red-600 hover:bg-red-700 px-5 py-2 text-sm"
+                    >
+                        <Icon name="refresh" :size="16" />
+                        Reintentar
+                    </button>
+                </div>
+            </div>
+
+            <div v-if="plan.status === 'generating'" class="rounded-xl border border-amber-200/60 bg-amber-50/60 p-6 dark:border-amber-900/30 dark:bg-amber-950/20">
+                <div class="flex items-center gap-3">
+                    <Icon name="loader" :size="20" class="animate-spin text-amber-600" />
+                    <p class="text-sm font-medium text-amber-800 dark:text-amber-200">Generando plan con IA...</p>
                 </div>
             </div>
 
@@ -161,6 +253,10 @@ function scrollToWeek(weekId: number) {
                                     <span class="flex items-center gap-1">
                                         <Icon name="list" :size="12" />
                                         {{ completedTopicsCount(week) }}/{{ week.topics.length }} temas
+                                    </span>
+                                    <span v-if="weekMinutes(week) > 0" class="flex items-center gap-1">
+                                        <Icon name="clock" :size="12" />
+                                        {{ formatMinutes(weekMinutes(week)) }}
                                     </span>
                                 </div>
                             </div>
@@ -207,13 +303,29 @@ function scrollToWeek(weekId: number) {
 
                                     <div class="min-w-0 flex-1">
                                         <div class="flex flex-wrap items-start justify-between gap-2">
-                                            <h4 :class="[
-                                                'text-sm font-medium transition-all',
-                                                topic.is_completed
-                                                    ? 'text-gray-400 line-through dark:text-gray-500'
-                                                    : 'text-gray-900 dark:text-white'
-                                            ]">{{ topic.title }}</h4>
+                                            <div>
+                                                <h4 :class="[
+                                                    'text-sm font-medium transition-all',
+                                                    topic.is_completed
+                                                        ? 'text-gray-400 line-through dark:text-gray-500'
+                                                        : 'text-gray-900 dark:text-white'
+                                                ]">{{ topic.title }}</h4>
+                                                <div v-if="topic.sessions?.length" class="mt-1 flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
+                                                    <span class="flex items-center gap-0.5">
+                                                        <Icon name="clock" :size="10" />
+                                                        {{ formatMinutes(topic.sessions.reduce((a: number, s: any) => a + s.duration_minutes, 0)) }}
+                                                    </span>
+                                                    <span>{{ topic.sessions.length }} sesiones</span>
+                                                </div>
+                                            </div>
                                             <div class="flex items-center gap-2">
+                                                <button
+                                                    @click.stop="openSessionForm(topic.id)"
+                                                    class="btn-ghost text-xs !px-2.5 !py-1"
+                                                >
+                                                    <Icon name="plus" :size="12" />
+                                                    Registrar
+                                                </button>
                                                 <span :class="['badge', difficultyColors[topic.difficulty] || 'badge-gray']">
                                                     <Icon :name="topic.difficulty === 'beginner' ? 'target' : topic.difficulty === 'intermediate' ? 'trending-up' : 'award'" :size="10" />
                                                     {{ topic.difficulty }}
@@ -243,6 +355,100 @@ function scrollToWeek(weekId: number) {
                                                 <span class="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Ejemplo</span>
                                             </div>
                                             <pre class="overflow-x-auto p-4 text-sm text-gray-700 dark:text-gray-300"><code>{{ topic.examples }}</code></pre>
+                                        </div>
+
+                                        <!-- Session form -->
+                                        <div v-if="sessionTopic === topic.id" class="mt-4 rounded-xl border border-brand-200 bg-brand-50/50 p-4 dark:border-brand-800/30 dark:bg-brand-950/20">
+                                            <div class="flex items-center justify-between mb-4">
+                                                <span class="text-sm font-medium text-brand-700 dark:text-brand-300">Registrar sesion</span>
+                                                <button @click="closeSessionForm" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                                                    <Icon name="x" :size="16" />
+                                                </button>
+                                            </div>
+
+                                            <div class="space-y-4">
+                                                <div>
+                                                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Duracion (minutos)</label>
+                                                    <div class="flex items-center gap-3">
+                                                        <input
+                                                            type="range"
+                                                            min="5"
+                                                            max="180"
+                                                            v-model.number="sessionForm.duration_minutes"
+                                                            class="h-1.5 flex-1 cursor-pointer appearance-none rounded-full bg-gray-200 accent-brand-600 dark:bg-gray-700"
+                                                        />
+                                                        <span class="text-sm font-bold text-brand-600 w-10 text-right">{{ sessionForm.duration_minutes }}m</span>
+                                                    </div>
+                                                </div>
+
+                                                <div>
+                                                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Nivel de confianza</label>
+                                                    <div class="flex gap-2">
+                                                        <button
+                                                            v-for="n in 5"
+                                                            :key="n"
+                                                            type="button"
+                                                            @click="sessionForm.confidence_level = n"
+                                                            :class="[
+                                                                'flex h-8 w-8 items-center justify-center rounded-lg text-xs font-bold transition-all',
+                                                                n <= sessionForm.confidence_level
+                                                                    ? 'bg-brand-600 text-white'
+                                                                    : 'bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500'
+                                                            ]"
+                                                        >{{ n }}</button>
+                                                    </div>
+                                                </div>
+
+                                                <div>
+                                                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Notas (opcional)</label>
+                                                    <textarea
+                                                        v-model="sessionForm.notes"
+                                                        rows="2"
+                                                        placeholder="Que aprendiste? Que fue dificil?"
+                                                        class="w-full rounded-lg border border-gray-200 bg-white/50 p-2.5 text-sm text-gray-900 transition-all placeholder:text-gray-400 focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-800/50 dark:text-white dark:placeholder:text-gray-500"
+                                                    />
+                                                </div>
+
+                                                <div class="flex items-center gap-2">
+                                                    <button
+                                                        @click="submitSession(topic.id)"
+                                                        :disabled="sessionForm.processing"
+                                                        class="btn-primary px-4 py-2 text-xs"
+                                                    >
+                                                        <Icon v-if="sessionForm.processing" name="loader" :size="14" class="animate-spin" />
+                                                        <Icon v-else name="check" :size="14" />
+                                                        Guardar sesion
+                                                    </button>
+                                                    <button @click="closeSessionForm" type="button" class="btn-secondary px-4 py-2 text-xs">
+                                                        Cancelar
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Session list -->
+                                        <div v-if="topic.sessions?.length && sessionTopic !== topic.id" class="mt-3 space-y-1.5">
+                                            <div
+                                                v-for="session in topic.sessions"
+                                                :key="session.id"
+                                                class="flex items-center justify-between rounded-lg bg-gray-50/50 px-3 py-2 dark:bg-gray-800/30"
+                                            >
+                                                <div class="flex items-center gap-3 text-xs">
+                                                    <Icon name="clock" :size="12" class="text-gray-400" />
+                                                    <span class="font-medium text-gray-700 dark:text-gray-300">{{ formatMinutes(session.duration_minutes) }}</span>
+                                                    <span class="flex items-center gap-1 text-gray-500">
+                                                        <Icon name="star" :size="10" />
+                                                        {{ session.confidence_level }}/5
+                                                    </span>
+                                                    <span v-if="session.notes" class="max-w-[200px] truncate text-gray-400">{{ session.notes }}</span>
+                                                </div>
+                                                <button
+                                                    @click="deleteSession(session.id)"
+                                                    class="text-gray-400 transition-colors hover:text-red-500"
+                                                >
+                                                    <Icon name="trash" :size="12" />
+                                                </button>
+                                            </div>
                                         </div>
 
                                         <div class="mt-3 flex flex-wrap items-center gap-3 text-xs text-gray-400 dark:text-gray-500">
