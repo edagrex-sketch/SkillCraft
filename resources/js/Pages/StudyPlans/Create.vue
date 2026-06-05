@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, useForm } from '@inertiajs/vue3'
+import { Head, useForm } from '@inertiajs/vue3'
 import { ref, computed, onMounted } from 'vue'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import Icon from '@/Components/Icon.vue'
@@ -16,22 +16,18 @@ const form = useForm({
 
 const step = ref(1)
 const totalSteps = 4
-
-function submit() {
-    form.post(route('study-plans.store'))
-}
-
 const mounted = ref(false)
 const direction = ref(1)
 
 onMounted(() => { mounted.value = true })
 
 const canNext = computed(() => {
-    if (step.value === 1) return !!form.skill
+    if (step.value === 1) return !!form.skill.trim()
     return true
 })
 
 function nextStep() {
+    if (step.value === 1 && !form.skill.trim()) return
     direction.value = 1
     if (step.value < totalSteps) step.value++
 }
@@ -39,6 +35,11 @@ function nextStep() {
 function prevStep() {
     direction.value = -1
     if (step.value > 1) step.value--
+}
+
+function submit() {
+    if (!form.goals.trim() || !form.learning_style) return
+    form.post(route('study-plans.store'))
 }
 
 const popularSkills = [
@@ -53,6 +54,10 @@ const steps = [
     { num: 3, title: 'Tiempo', icon: 'clock' },
     { num: 4, title: 'Meta', icon: 'flag' },
 ]
+
+function fieldError(field: string): string {
+    return (form.errors as any)[field] || ''
+}
 </script>
 
 <template>
@@ -105,7 +110,16 @@ const steps = [
                     </div>
                 </div>
 
-                <form @submit.prevent="submit">
+                <form @submit.prevent="submit" novalidate>
+                    <div v-if="Object.keys(form.errors).length" class="mb-6 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50/80 p-4 text-sm text-red-700 dark:border-red-900/30 dark:bg-red-950/20 dark:text-red-300 animate-fade-in-down">
+                        <Icon name="alert-circle" :size="18" class="mt-0.5 shrink-0 text-red-500" />
+                        <div>
+                            <p class="font-medium">Corrige los siguientes errores:</p>
+                            <ul class="mt-1 list-inside list-disc space-y-0.5 text-red-600 dark:text-red-400">
+                                <li v-for="(msg, field) in form.errors" :key="field as string">{{ msg }}</li>
+                            </ul>
+                        </div>
+                    </div>
                     <transition name="slide" mode="out-in">
                         <div v-if="step === 1" key="step1" class="min-h-[280px]">
                             <h3 class="text-xl font-bold text-gray-900 dark:text-white">Que quieres aprender?</h3>
@@ -269,8 +283,14 @@ const steps = [
                                         v-model="form.goals"
                                         rows="3"
                                         placeholder="Quiero crear mi propia app web, conseguir trabajo como data scientist, hacer mi portfolio..."
-                                        class="mt-1.5 w-full rounded-xl border border-gray-200 bg-white/50 p-3.5 text-[15px] text-gray-900 transition-all placeholder:text-gray-400 focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-800/50 dark:text-white dark:placeholder:text-gray-500 dark:focus:border-brand-400"
+                                        :class="[
+                                            'mt-1.5 w-full rounded-xl border bg-white/50 p-3.5 text-[15px] text-gray-900 transition-all placeholder:text-gray-400 focus:outline-none focus:ring-4 dark:bg-gray-800/50 dark:text-white dark:placeholder:text-gray-500',
+                                            fieldError('goals')
+                                                ? 'border-red-300 focus:border-red-500 focus:ring-red-500/10 dark:border-red-800'
+                                                : 'border-gray-200 focus:border-brand-500 focus:ring-brand-500/10 dark:border-gray-700 dark:focus:border-brand-400'
+                                        ]"
                                     />
+                                    <p v-if="fieldError('goals')" class="mt-1.5 text-sm text-red-500">{{ fieldError('goals') }}</p>
                                 </div>
 
                                 <div class="grid gap-5 sm:grid-cols-2">
@@ -278,7 +298,12 @@ const steps = [
                                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Estilo de aprendizaje</label>
                                         <select
                                             v-model="form.learning_style"
-                                            class="mt-1.5 w-full rounded-xl border border-gray-200 bg-white/50 p-3.5 text-[15px] text-gray-900 transition-all focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-800/50 dark:text-white"
+                                            :class="[
+                                                'mt-1.5 w-full rounded-xl border bg-white/50 p-3.5 text-[15px] text-gray-900 transition-all focus:outline-none focus:ring-4 dark:bg-gray-800/50 dark:text-white',
+                                                fieldError('learning_style')
+                                                    ? 'border-red-300 focus:border-red-500 focus:ring-red-500/10 dark:border-red-800'
+                                                    : 'border-gray-200 focus:border-brand-500 focus:ring-brand-500/10 dark:border-gray-700'
+                                            ]"
                                         >
                                             <option value="">Selecciona tu estilo</option>
                                             <option value="visual">Visual (videos, diagramas)</option>
@@ -287,6 +312,7 @@ const steps = [
                                             <option value="practico">Practico (ejercicios, proyectos)</option>
                                             <option value="mixto">Mixto (combinacion)</option>
                                         </select>
+                                        <p v-if="fieldError('learning_style')" class="mt-1.5 text-sm text-red-500">{{ fieldError('learning_style') }}</p>
                                     </div>
 
                                     <div>
@@ -295,8 +321,14 @@ const steps = [
                                             v-model="form.focus"
                                             type="text"
                                             placeholder="Ej: desarrollo web, analisis de datos..."
-                                            class="mt-1.5 w-full rounded-xl border border-gray-200 bg-white/50 p-3.5 text-[15px] text-gray-900 transition-all placeholder:text-gray-400 focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-800/50 dark:text-white dark:placeholder:text-gray-500 dark:focus:border-brand-400"
+                                            :class="[
+                                                'mt-1.5 w-full rounded-xl border bg-white/50 p-3.5 text-[15px] text-gray-900 transition-all placeholder:text-gray-400 focus:outline-none focus:ring-4 dark:bg-gray-800/50 dark:text-white dark:placeholder:text-gray-500',
+                                                fieldError('focus')
+                                                    ? 'border-red-300 focus:border-red-500 focus:ring-red-500/10 dark:border-red-800'
+                                                    : 'border-gray-200 focus:border-brand-500 focus:ring-brand-500/10 dark:border-gray-700 dark:focus:border-brand-400'
+                                            ]"
                                         />
+                                        <p v-if="fieldError('focus')" class="mt-1.5 text-sm text-red-500">{{ fieldError('focus') }}</p>
                                     </div>
                                 </div>
                             </div>
@@ -330,8 +362,8 @@ const steps = [
                         <template v-else>
                             <button
                                 type="submit"
-                                :disabled="form.processing"
-                                class="btn-primary relative overflow-hidden px-8 py-2.5 text-sm"
+                                :disabled="form.processing || !form.goals.trim() || !form.learning_style"
+                                class="btn-primary relative overflow-hidden px-8 py-2.5 text-sm disabled:opacity-50"
                             >
                                 <span v-if="form.processing" class="flex items-center gap-2">
                                     <Icon name="loader" :size="16" class="animate-spin" />

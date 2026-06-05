@@ -1,7 +1,25 @@
 <template>
     <button
-        class="inline-flex items-center rounded-md border border-transparent bg-gray-800 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-white transition duration-150 ease-in-out hover:bg-gray-700 focus:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 active:bg-gray-900 dark:bg-gray-200 dark:text-gray-800 dark:hover:bg-white dark:focus:bg-white dark:focus:ring-offset-gray-800 dark:active:bg-gray-300"
+        :class="[
+            'inline-flex items-center justify-center gap-2 rounded-xl border border-transparent px-5 py-2.5 text-sm font-semibold text-white transition-all duration-200 ease-out-expo focus:outline-none focus:ring-4 focus:ring-brand-500/20 active:scale-[0.97]',
+            props.disabled
+                ? 'cursor-not-allowed bg-gray-400 dark:bg-gray-600'
+                : 'bg-gradient-to-b from-brand-600 to-brand-700 shadow-lg shadow-brand-600/25 hover:from-brand-500 hover:to-brand-600 hover:shadow-xl hover:shadow-brand-600/30',
+        ]"
+        @click="$emit('click')"
     >
         <slot />
     </button>
 </template>
+
+<script setup lang="ts">
+const props = withDefaults(defineProps<{
+    disabled?: boolean
+}>(), {
+    disabled: false,
+})
+
+defineEmits<{
+    click: []
+}>()
+</script>
