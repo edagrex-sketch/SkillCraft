@@ -159,7 +159,7 @@ function fieldError(field: string): string {
                             </div>
                         </div>
 
-                        <div v-if="step === 2" key="step2" class="min-h-[280px]">
+                        <div v-else-if="step === 2" key="step2" class="min-h-[280px]">
                             <h3 class="text-xl font-bold text-gray-900 dark:text-white">Cual es tu nivel?</h3>
                             <p class="mt-1.5 text-sm text-gray-500 dark:text-gray-400">Selecciona tu nivel actual en esta habilidad</p>
 
@@ -217,7 +217,7 @@ function fieldError(field: string): string {
                             </div>
                         </div>
 
-                        <div v-if="step === 3" key="step3" class="min-h-[280px]">
+                        <div v-else-if="step === 3" key="step3" class="min-h-[280px]">
                             <h3 class="text-xl font-bold text-gray-900 dark:text-white">Duracion y dedicacion</h3>
                             <p class="mt-1.5 text-sm text-gray-500 dark:text-gray-400">Configura cuanto tiempo puedes dedicar</p>
 
@@ -272,7 +272,7 @@ function fieldError(field: string): string {
                             </div>
                         </div>
 
-                        <div v-if="step === 4" key="step4" class="min-h-[280px]">
+                        <div v-else-if="step === 4" key="step4" class="min-h-[280px]">
                             <h3 class="text-xl font-bold text-gray-900 dark:text-white">Tu meta personal</h3>
                             <p class="mt-1.5 text-sm text-gray-500 dark:text-gray-400">Cuentanos mas para personalizar tu plan al maximo</p>
 
