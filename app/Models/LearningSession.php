@@ -16,6 +16,11 @@ class LearningSession extends Model
         'confidence_level',
         'started_at',
         'completed_at',
+        'phase_completions',
+        'reflection_answers',
+        'active_recall_score',
+        'needs_review',
+        'next_review_at',
     ];
 
     protected function casts(): array
@@ -23,6 +28,10 @@ class LearningSession extends Model
         return [
             'started_at' => 'datetime',
             'completed_at' => 'datetime',
+            'next_review_at' => 'datetime',
+            'needs_review' => 'boolean',
+            'phase_completions' => 'array',
+            'reflection_answers' => 'array',
         ];
     }
 

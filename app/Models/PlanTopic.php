@@ -23,6 +23,17 @@ class PlanTopic extends Model
         'is_completed',
         'completed_at',
         'order',
+        'session_context',
+        'active_recall_question',
+        'practice_guided',
+        'practice_structured',
+        'practice_open',
+        'reflection_prompts',
+        'common_mistakes',
+        'challenge',
+        'analogies',
+        'prerequisites',
+        'review_questions',
     ];
 
     protected function casts(): array
@@ -31,6 +42,11 @@ class PlanTopic extends Model
             'has_theory' => 'boolean',
             'is_completed' => 'boolean',
             'completed_at' => 'datetime',
+            'reflection_prompts' => 'array',
+            'common_mistakes' => 'array',
+            'analogies' => 'array',
+            'prerequisites' => 'array',
+            'review_questions' => 'array',
         ];
     }
 
