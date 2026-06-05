@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { Head, Link, router, useForm } from '@inertiajs/vue3'
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import Icon from '@/Components/Icon.vue'
+import { fireConfetti } from '@/Utils/confetti'
 
 const props = defineProps<{
     plan: any
@@ -15,8 +16,21 @@ function toggleWeek(weekId: number) {
     activeWeek.value = activeWeek.value === weekId ? null : weekId
 }
 
+const mounted = ref(false)
+
+onMounted(() => {
+    mounted.value = true
+    if (progressPercent.value === 100) {
+        setTimeout(() => fireConfetti(), 600)
+    }
+})
+
 function toggleTopic(topicId: number) {
-    router.patch(route('topics.complete', topicId))
+    router.patch(route('topics.complete', topicId), {}, {
+        onSuccess: () => {
+            setTimeout(() => fireConfetti(), 400)
+        }
+    })
 }
 
 function completedTopicsCount(week: any) {
@@ -152,7 +166,7 @@ function weekMinutes(week: any) {
         </template>
 
         <div class="space-y-8">
-            <div class="rounded-xl border border-gray-200/60 bg-white/60 p-6 shadow-sm dark:border-gray-800/40 dark:bg-gray-900/40">
+            <div :class="['rounded-xl border border-gray-200/60 bg-white/60 p-6 shadow-sm dark:border-gray-800/40 dark:bg-gray-900/40', 'transition-all duration-700 ease-out-expo', mounted ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0']">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-4">
                         <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-50 dark:bg-brand-950">
@@ -225,12 +239,13 @@ function weekMinutes(week: any) {
                 </div>
             </div>
 
-            <div class="space-y-4">
+            <div :class="['space-y-4', 'transition-all duration-700 delay-150 ease-out-expo', mounted ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0']">
                 <div
-                    v-for="week in plan.weeks"
+                    v-for="(week, i) in plan.weeks"
                     :key="week.id"
                     :id="`week-${week.id}`"
-                    class="rounded-xl border border-gray-200/60 bg-white/60 shadow-sm transition-all duration-300 dark:border-gray-800/40 dark:bg-gray-900/40"
+                    class="rounded-xl border border-gray-200/60 bg-white/60 shadow-sm transition-all duration-500 ease-out-expo dark:border-gray-800/40 dark:bg-gray-900/40 animate-fade-in-up"
+                    :style="{ animationDelay: `${i * 80}ms` }"
                 >
                     <button
                         @click="toggleWeek(week.id)"

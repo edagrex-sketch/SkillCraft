@@ -17,8 +17,8 @@ const navLinks = [
         <nav class="fixed top-0 z-50 w-full border-b border-gray-200/50 bg-white/60 backdrop-blur-2xl dark:border-gray-800/30 dark:bg-[#0a0a14]/60">
             <div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
                 <div class="flex items-center gap-8">
-                    <Link :href="route('dashboard')" class="flex items-center gap-2.5">
-                        <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600 text-sm font-bold text-white">
+                    <Link :href="route('dashboard')" class="flex items-center gap-2.5 transition-opacity hover:opacity-80">
+                        <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600 text-sm font-bold text-white shadow-sm shadow-brand-600/20">
                             S
                         </div>
                         <span class="text-[15px] font-semibold tracking-tight text-gray-900 dark:text-white">SkillCraft</span>
@@ -50,17 +50,17 @@ const navLinks = [
                             @click="showingUserMenu = !showingUserMenu"
                             class="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm font-medium text-gray-600 transition-all hover:bg-gray-100/80 dark:text-gray-400 dark:hover:bg-gray-800/80"
                         >
-                            <div class="flex h-7 w-7 items-center justify-center rounded-full bg-brand-600 text-xs font-semibold text-white">
+                            <div class="flex h-7 w-7 items-center justify-center rounded-full bg-brand-600 text-xs font-semibold text-white ring-2 ring-white dark:ring-gray-900">
                                 {{ $page.props.auth.user.name.charAt(0).toUpperCase() }}
                             </div>
                             <span class="hidden sm:inline">{{ $page.props.auth.user.name }}</span>
-                            <Icon name="chevron-down" :size="14" class="text-gray-400" />
+                            <Icon name="chevron-down" :size="14" class="text-gray-400 transition-transform duration-200" :class="showingUserMenu ? 'rotate-180' : ''" />
                         </button>
 
                         <div
                             v-show="showingUserMenu"
                             @click.away="showingUserMenu = false"
-                            class="absolute right-0 mt-2 w-56 animate-fade-in-down rounded-xl border border-gray-200/60 bg-white p-1.5 shadow-xl shadow-gray-900/10 dark:border-gray-800/40 dark:bg-gray-900"
+                            class="absolute right-0 mt-2 w-56 animate-scale-in rounded-xl border border-gray-200/60 bg-white p-1.5 shadow-xl shadow-gray-900/10 dark:border-gray-800/40 dark:bg-gray-900 origin-top-right"
                         >
                             <div class="border-b border-gray-100 px-3 py-2.5 dark:border-gray-800">
                                 <p class="text-sm font-medium text-gray-900 dark:text-white">{{ $page.props.auth.user.name }}</p>
@@ -125,13 +125,17 @@ const navLinks = [
 
         <header v-if="$slots.header" class="relative pt-16">
             <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-                <slot name="header" />
+                <div class="animate-fade-in-down">
+                    <slot name="header" />
+                </div>
             </div>
         </header>
 
         <main :class="['mx-auto max-w-7xl px-4 sm:px-6 lg:px-8', $slots.header ? '' : 'pt-24']">
             <div class="py-6">
-                <slot />
+                <div class="animate-fade-in-up">
+                    <slot />
+                </div>
             </div>
         </main>
     </div>

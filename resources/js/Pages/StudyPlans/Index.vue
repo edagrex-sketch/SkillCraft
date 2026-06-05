@@ -55,6 +55,10 @@ function progressPercent(plan: any) {
 }
 
 const hasActiveFilters = () => search.value || statusFilter.value || levelFilter.value
+
+function submitRetry(planId: number) {
+    router.post(route('study-plans.retry', planId))
+}
 </script>
 
 <template>
@@ -71,16 +75,16 @@ const hasActiveFilters = () => search.value || statusFilter.value || levelFilter
                 </div>
                 <Link
                     :href="route('study-plans.create')"
-                    class="btn-primary px-5 py-2.5 text-sm shrink-0"
+                    class="btn-primary px-5 py-2.5 text-sm shrink-0 group"
                 >
-                    <Icon name="plus" :size="16" />
+                    <Icon name="plus" :size="16" class="transition-transform duration-200 group-hover:rotate-90" />
                     Nuevo Plan
                 </Link>
             </div>
         </template>
 
         <div class="space-y-6">
-            <div class="flex flex-wrap items-center gap-3">
+            <div class="flex flex-wrap items-center gap-3 animate-fade-in-down">
                 <div class="relative flex-1 min-w-[200px] max-w-xs">
                     <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                         <Icon name="search" :size="16" class="text-gray-400" />
@@ -120,7 +124,7 @@ const hasActiveFilters = () => search.value || statusFilter.value || levelFilter
                 <button
                     v-if="hasActiveFilters()"
                     @click="clearFilters"
-                    class="btn-ghost text-sm"
+                    class="btn-ghost text-sm animate-scale-in"
                 >
                     <Icon name="x" :size="14" />
                     Limpiar filtros
@@ -128,7 +132,7 @@ const hasActiveFilters = () => search.value || statusFilter.value || levelFilter
             </div>
 
             <div v-if="plans.length === 0" class="flex items-center justify-center py-20">
-                <div class="text-center">
+                <div class="text-center animate-fade-in-up">
                     <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-50 dark:bg-brand-950">
                         <Icon name="book" :size="28" class="text-brand-600 dark:text-brand-400" />
                     </div>
@@ -159,19 +163,20 @@ const hasActiveFilters = () => search.value || statusFilter.value || levelFilter
 
             <div v-else class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 <div
-                    v-for="plan in plans"
+                    v-for="(plan, i) in plans"
                     :key="plan.id"
-                    class="group"
+                    class="animate-fade-in-up"
+                    :style="{ animationDelay: `${i * 80}ms` }"
                 >
                     <Link
                         :href="route('study-plans.show', plan.id)"
-                        class="relative block overflow-hidden rounded-xl border border-gray-200/60 bg-white/60 p-6 shadow-sm transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 hover:border-gray-200 hover:shadow-lg dark:border-gray-800/40 dark:bg-gray-900/40 dark:hover:border-gray-700/50"
+                        class="relative block overflow-hidden rounded-xl border border-gray-200/60 bg-white/60 p-6 shadow-sm transition-all duration-500 ease-out-expo hover:-translate-y-1 hover:border-gray-200 hover:shadow-xl dark:border-gray-800/40 dark:bg-gray-900/40 dark:hover:border-gray-700/50 shine"
                     >
-                        <div class="pointer-events-none absolute inset-0 bg-gradient-to-b from-brand-500/[0.02] to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                        <div class="pointer-events-none absolute inset-0 bg-gradient-to-b from-brand-500/[0.02] to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
 
                         <div class="relative">
                             <div class="flex items-start justify-between">
-                                <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-600 text-base font-bold text-white shadow-sm">
+                                <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-600 text-base font-bold text-white shadow-sm transition-transform duration-200 group-hover:scale-105">
                                     {{ plan.title.charAt(0).toUpperCase() }}
                                 </div>
                                 <span
@@ -200,7 +205,7 @@ const hasActiveFilters = () => search.value || statusFilter.value || levelFilter
                                 </div>
                                 <div class="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
                                     <div
-                                        class="h-full rounded-full bg-gradient-to-r from-brand-500 to-brand-600 transition-all duration-500"
+                                        class="h-full rounded-full bg-gradient-to-r from-brand-500 to-brand-600 transition-all duration-1000 ease-out-expo"
                                         :style="{ width: progressPercent(plan) + '%' }"
                                     />
                                 </div>
@@ -229,8 +234,8 @@ const hasActiveFilters = () => search.value || statusFilter.value || levelFilter
                                     <Icon name="alert-circle" :size="12" />
                                     <span class="flex-1">Error al generar</span>
                                     <button
-                                        @click.prevent="router.post(route('study-plans.retry', plan.id))"
-                                        class="font-medium hover:underline"
+                                        @click.prevent="submitRetry(plan.id)"
+                                        class="font-medium hover:underline transition-colors"
                                     >
                                         Reintentar
                                     </button>
